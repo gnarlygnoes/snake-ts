@@ -165,8 +165,14 @@ function setSpeed(level) {
     return .04;
 }
 function initGame() {
-    pRect[0].x = 0; // = { x: 0, y: 0 }
-    pRect[0].y = 0;
+    //pRect[0].x = 0 // = { x: 0, y: 0 }
+    //pRect[0].y = 0
+    pRect = [{
+            x: 0,
+            y: 0,
+            w: tile_size,
+            h: tile_size,
+        }];
     direction = { x: 1, y: 0 };
     score = 0;
     elapsed = 0;
