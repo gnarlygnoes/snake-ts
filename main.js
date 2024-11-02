@@ -2,16 +2,14 @@ var canvas = document.querySelector("canvas");
 var c = canvas.getContext("2d");
 var tile_size = 30;
 var time = 0;
-var speed = 1;
 var playerAlive = true;
 var block = false;
 var score = 0;
 var GameState;
 (function (GameState) {
     GameState[GameState["active"] = 0] = "active";
-    GameState[GameState["victorious"] = 1] = "victorious";
-    GameState[GameState["collided"] = 2] = "collided";
-    GameState[GameState["paused"] = 3] = "paused";
+    GameState[GameState["collided"] = 1] = "collided";
+    GameState[GameState["paused"] = 2] = "paused";
 })(GameState || (GameState = {}));
 var state = GameState.active;
 var cWidth = tile_size * 30;
@@ -22,15 +20,23 @@ var direction = {
     x: 1,
     y: 0,
 };
-var pos = {
-    x: 0,
-    y: 0,
-};
+//let pos = {
+//  x: 0,
+//  y: 0,
+//}
+var pRect = [{
+        x: 0,
+        y: 0,
+        w: tile_size,
+        h: tile_size,
+    }];
 var fps = 0;
 var dt = 0;
 var current = performance.now();
 var last = performance.now();
 var elapsed = 0;
+var speed = 0.25;
+var level = 1;
 var food = foodpos();
 function update() {
     switch (state) {
@@ -48,24 +54,38 @@ function gameLoop() {
     elapsed += dt;
     // console.log(elapsed)
     if (elapsed > speed) {
-        pos.x += tile_size * direction.x;
-        pos.y += tile_size * direction.y;
+        for (var i = pRect.length - 1; i > 0; i--) {
+            pRect[i].x = pRect[i - 1].x;
+            pRect[i].y = pRect[i - 1].y;
+        }
+        pRect[0].x += tile_size * direction.x;
+        pRect[0].y += tile_size * direction.y;
         elapsed = 0;
         block = false;
-        if (pos.x === food.x && pos.y === food.y) {
+        if (pRect[0].x === food.x && pRect[0].y === food.y) {
             food = foodpos();
+            pRect.push({ x: pRect[pRect.length - 1].x, y: pRect[pRect.length - 1].y, w: tile_size, h: tile_size });
+            //console.log(pRect.length)
             score++;
+            level = setLevel(score);
+            speed = setSpeed(level);
         }
-        if (pos.x >= cWidth || pos.x < 0 || pos.y < 0 || pos.y >= cHeight) {
+        // let i = pRect.length - 1
+        if (pRect[0].x >= cWidth || pRect[0].x < 0 || pRect[0].y < 0 || pRect[0].y >= cHeight) {
             state = GameState.collided;
         }
+        for (var i = 4; i < pRect.length; i++) {
+            if (pRect[0].x == pRect[i].x && pRect[0].y == pRect[i].y) {
+                state = GameState.collided;
+            }
+        }
     }
-    setSpeed();
-    console.log(speed);
+    //console.log("speed: " + speed)
+    //console.log("level: " + level)
 }
 update();
 window.addEventListener("keypress", function (event) {
-    console.log(event);
+    //console.log(event)
     if (event.key === "j" && !block && direction.y == 0) {
         direction.y = 1;
         direction.x = 0;
@@ -91,30 +111,56 @@ window.addEventListener("keypress", function (event) {
         state = GameState.active;
     }
 });
-function setSpeed() {
-    switch (score) {
-        case 0:
-            speed = 0.5;
-            break;
-        case 5:
-            speed = .3;
-            break;
-        case 10:
-            speed = .2;
-            break;
-        case 15:
-            speed = .15;
-            break;
-        case 20:
-            speed = .12;
-            break;
-        case 25:
-            speed = .1;
-            break;
+function setLevel(score) {
+    if (score < 5) {
+        return 1;
+    }
+    else if (score < 10) {
+        return 2;
+    }
+    else if (score < 15) {
+        return 3;
+    }
+    else if (score < 20) {
+        return 4;
+    }
+    else if (score < 25) {
+        return 5;
+    }
+    else if (score < 30) {
+        return 6;
+    }
+    else if (score < 40) {
+        return 7;
+    }
+    else {
+        return 8;
     }
 }
+function setSpeed(level) {
+    switch (level) {
+        case 1:
+            return 0.25;
+        case 2:
+            return .2;
+        case 3:
+            return .15;
+        case 4:
+            return .12;
+        case 5:
+            return .1;
+        case 6:
+            return .08;
+        case 7:
+            return .06;
+        case 8:
+            return .04;
+    }
+    return .04;
+}
 function initGame() {
-    pos = { x: 0, y: 0 };
+    pRect[0].x = 0; // = { x: 0, y: 0 }
+    pRect[0].y = 0;
     direction = { x: 1, y: 0 };
     score = 0;
     elapsed = 0;
@@ -131,17 +177,26 @@ function draw() {
     if (state === GameState.active) {
         c.fillStyle = "grey";
         c.fillRect(0, 0, canvas.width, canvas.height);
+        c.fillStyle = "yellow";
+        for (var i = 1; i < pRect.length; i++) {
+            c.fillRect(pRect[i].x, pRect[i].y, tile_size, tile_size);
+        }
         c.fillStyle = "orange";
-        c.fillRect(pos.x, pos.y, tile_size, tile_size);
+        c.fillRect(pRect[0].x, pRect[0].y, tile_size, tile_size);
         c.fillStyle = "red";
         c.fillRect(food.x, food.y, tile_size, tile_size);
+        c.fillStyle = "blue";
+        c.font = "36px serif";
+        c.fillText("Score: " + score, 20, cHeight - 20);
+        c.fillText("Level: " + level, cWidth - 135, cHeight - 20);
     }
     else if (state === GameState.collided) {
         c.fillStyle = "black";
         c.fillRect(0, 0, canvas.width, canvas.height);
         c.fillStyle = "red";
         c.font = "36px serif";
-        c.fillText("CRASH! Hit Enter to start again", 200, 200);
+        c.fillText("After slith'ring off, you return hungry", 150, 200);
+        c.fillText("Press Enter to begin again", 150, 300);
         // console.log(state)
     }
 }

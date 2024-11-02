@@ -4,14 +4,12 @@ const c = canvas!.getContext("2d");
 const tile_size = 30;
 
 let time = 0;
-let speed = 1
 let playerAlive = true
 let block = false
 let score = 0
 
 enum GameState {
   active,
-  victorious,
   collided,
   paused
 }
@@ -28,16 +26,25 @@ let direction = {
   x: 1,
   y: 0,
 }
-let pos = {
+//let pos = {
+//  x: 0,
+//  y: 0,
+//}
+
+let pRect = [{
   x: 0,
   y: 0,
-}
+  w: tile_size,
+  h: tile_size,
+}]
 
 let fps = 0;
 let dt = 0;
 let current = performance.now()
 let last = performance.now()
 let elapsed: number = 0
+let speed: number = 0.25
+let level: number = 1
 
 let food = foodpos()
 
@@ -61,29 +68,48 @@ function gameLoop() {
   // console.log(elapsed)
 
   if (elapsed > speed) {
-    pos.x += tile_size * direction.x
-    pos.y += tile_size * direction.y
+    for (let i = pRect.length - 1; i > 0; i--) {
+      pRect[i].x = pRect[i - 1].x
+      pRect[i].y = pRect[i - 1].y
+    }
+
+    pRect[0].x += tile_size * direction.x
+    pRect[0].y += tile_size * direction.y
     elapsed = 0
     block = false
 
-    if (pos.x === food.x && pos.y === food.y) {
-      food = foodpos()
-      score++
-    }
 
-    if (pos.x >= cWidth || pos.x < 0 || pos.y < 0 || pos.y >= cHeight) {
+    if (pRect[0].x === food.x && pRect[0].y === food.y) {
+      food = foodpos()
+      pRect.push({ x: pRect[pRect.length - 1].x, y: pRect[pRect.length - 1].y, w: tile_size, h: tile_size })
+
+      //console.log(pRect.length)
+
+      score++
+      level = setLevel(score)
+      speed = setSpeed(level)
+    }
+    // let i = pRect.length - 1
+
+
+    if (pRect[0].x >= cWidth || pRect[0].x < 0 || pRect[0].y < 0 || pRect[0].y >= cHeight) {
       state = GameState.collided
     }
-  }
 
-  setSpeed()
-  console.log(speed)
+    for (let i = 4; i < pRect.length; i++) {
+      if (pRect[0].x == pRect[i].x && pRect[0].y == pRect[i].y) {
+        state = GameState.collided
+      }
+    }
+  }
+  //console.log("speed: " + speed)
+  //console.log("level: " + level)
 }
 
 update();
 
 window.addEventListener("keypress", (event) => {
-  console.log(event)
+  //console.log(event)
   if (event.key === "j" && !block && direction.y == 0) {
     direction.y = 1
     direction.x = 0
@@ -110,31 +136,51 @@ window.addEventListener("keypress", (event) => {
   }
 })
 
-function setSpeed() {
-  switch (score) {
-    case 0:
-      speed = 0.5
-      break
-    case 5:
-      speed = .3
-      break
-    case 10:
-      speed = .2
-      break
-    case 15:
-      speed = .15
-      break
-    case 20:
-      speed = .12
-      break
-    case 25:
-      speed = .1
-      break
+function setLevel(score: number): number {
+  if (score < 5) {
+    return 1;
+  } else if (score < 10) {
+    return 2
+  } else if (score < 15) {
+    return 3
+  } else if (score < 20) {
+    return 4
+  } else if (score < 25) {
+    return 5
+  } else if (score < 30) {
+    return 6
+  } else if (score < 40) {
+    return 7
+  } else {
+    return 8
   }
 }
 
+function setSpeed(level: number): number {
+  switch (level) {
+    case 1:
+      return 0.25
+    case 2:
+      return .2
+    case 3:
+      return .15
+    case 4:
+      return .12
+    case 5:
+      return .1
+    case 6:
+      return .08
+    case 7:
+      return .06
+    case 8:
+      return .04
+  }
+  return .04
+}
+
 function initGame() {
-  pos = { x: 0, y: 0 }
+  pRect[0].x = 0 // = { x: 0, y: 0 }
+  pRect[0].y = 0
   direction = { x: 1, y: 0 }
   score = 0
   elapsed = 0
@@ -154,17 +200,28 @@ function draw() {
     c!.fillStyle = "grey";
     c!.fillRect(0, 0, canvas!.width, canvas!.height);
 
+    c!.fillStyle = "yellow"
+    for (let i = 1; i < pRect.length; i++) {
+      c!.fillRect(pRect[i].x, pRect[i].y, tile_size, tile_size)
+    }
+
     c!.fillStyle = "orange";
-    c!.fillRect(pos.x, pos.y, tile_size, tile_size);
+    c!.fillRect(pRect[0].x, pRect[0].y, tile_size, tile_size);
 
     c!.fillStyle = "red"
     c!.fillRect(food.x, food.y, tile_size, tile_size)
+
+    c!.fillStyle = "blue"
+    c!.font = "36px serif"
+    c!.fillText("Score: " + score, 20, cHeight - 20)
+    c!.fillText("Level: " + level, cWidth - 135, cHeight - 20)
   } else if (state === GameState.collided) {
     c!.fillStyle = "black";
     c!.fillRect(0, 0, canvas!.width, canvas!.height);
     c!.fillStyle = "red"
     c!.font = "36px serif"
-    c!.fillText("CRASH! Hit Enter to start again", 200, 200)
+    c!.fillText("After slith'ring off, you return hungry", 150, 200)
+    c!.fillText("Press Enter to begin again", 150, 300)
     // console.log(state)
   }
 }
