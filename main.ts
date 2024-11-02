@@ -134,6 +134,11 @@ window.addEventListener("keypress", (event) => {
     initGame()
     state = GameState.active
   }
+  if (event.key === "p" && state === GameState.active) {
+    state = GameState.paused
+  } else if (event.key === "p" && state === GameState.paused) {
+    state = GameState.active
+  }
 })
 
 function setLevel(score: number): number {
@@ -198,7 +203,7 @@ function foodpos(): { x: number, y: number } {
 function draw() {
   if (state === GameState.active) {
     c!.fillStyle = "grey";
-    c!.fillRect(0, 0, canvas!.width, canvas!.height);
+    c!.fillRect(0, 0, cWidth, cHeight);
 
     c!.fillStyle = "yellow"
     for (let i = 1; i < pRect.length; i++) {
@@ -217,11 +222,18 @@ function draw() {
     c!.fillText("Level: " + level, cWidth - 135, cHeight - 20)
   } else if (state === GameState.collided) {
     c!.fillStyle = "black";
-    c!.fillRect(0, 0, canvas!.width, canvas!.height);
+    c!.fillRect(0, 0, cWidth, cHeight);
     c!.fillStyle = "red"
     c!.font = "36px serif"
     c!.fillText("After slith'ring off, you return hungry", 150, 200)
-    c!.fillText("Press Enter to begin again", 150, 300)
+    c!.fillText("Final Score: " + score, 150, 300)
+    c!.fillText("Press Enter to begin again", 150, 400)
     // console.log(state)
+  } else if (state === GameState.paused) {
+    c!.fillStyle = "black"
+    c!.fillRect(0, 0, cWidth, cHeight)
+    c!.fillStyle = "white"
+    c!.font = "36px serif"
+    c!.fillText("GAME PAUSED", 310, 300)
   }
 }
