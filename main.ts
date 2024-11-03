@@ -195,6 +195,9 @@ function initGame() {
 
   direction = { x: 1, y: 0 }
   score = 0
+  level = 1
+  // level = setLevel(score)
+  speed = setSpeed(level)
   elapsed = 0
   food = foodpos()
 }
