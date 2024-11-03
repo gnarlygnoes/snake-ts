@@ -86,22 +86,22 @@ function gameLoop() {
 update();
 window.addEventListener("keypress", function (event) {
     //console.log(event)
-    if (event.key === "j" && !block && direction.y == 0) {
+    if ((event.key === "j" || event.key === "s") && !block && direction.y == 0) {
         direction.y = 1;
         direction.x = 0;
         block = true;
     }
-    if (event.key === "k" && !block && direction.y == 0) {
+    if ((event.key === "w" || event.key === "k") && !block && direction.y == 0) {
         direction.y = -1;
         direction.x = 0;
         block = true;
     }
-    if (event.key === "h" && !block && direction.x == 0) {
+    if ((event.key === "a" || event.key === "h") && !block && direction.x == 0) {
         direction.x = -1;
         direction.y = 0;
         block = true;
     }
-    if (event.key === "l" && !block && direction.x == 0) {
+    if ((event.key === "d" || event.key === "l") && !block && direction.x == 0) {
         direction.x = 1;
         direction.y = 0;
         block = true;
